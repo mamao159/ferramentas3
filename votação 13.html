@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Votação</title>
+</head>
+<body>
+
+<h2>Sistema de Votação</h2>
+
+<!-- Aba de Geração de Códigos -->
+<div id="generateTab">
+  <h3>Geração de Códigos</h3>
+  <label for="quantity">Quantidade de códigos:</label>
+  <input type="number" id="quantity" min="1" value="1">
+  <div id="names"></div>
+  <button id="generateCodesBtn">Gerar Códigos</button>
+  <div id="generatedCodes"></div>
+</div>
+
+<!-- Aba de Votação -->
+<div id="votingTab" style="display:none;">
+  <h3>Votação</h3>
+  <form id="votingForm">
+    <label for="code">Digite seu código de acesso:</label><br>
+    <input type="text" id="code" name="code" maxlength="3" pattern="\d{3}" required><br><br>
+    <label for="name">Seu nome:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
+    <label for="vote">Selecione sua opção de voto:</label><br>
+    <select id="vote" name="vote" required>
+      <option value="">Selecione...</option>
+      <option value="opcao1">Opção 1</option>
+      <option value="opcao2">Opção 2</option>
+      <option value="opcao3">Opção 3</option>
+    </select><br><br>
+    <button type="submit">Votar</button>
+  </form>
+  <div id="message"></div>
+  <button id="viewResultBtn" style="display:none;">Ver resultado</button>
+  <div id="votingResults" style="display:none;"></div>
+</div>
+
+<script>
+// Lista de códigos de acesso gerados aleatoriamente e nomes das pessoas
+let accessCodes = [];
+let names = [];
+let voteCount = {
+  opcao1: { count: 0, voters: [] },
+  opcao2: { count: 0, voters: [] },
+  opcao3: { count: 0, voters: [] }
+};
+
+// Função para gerar código de acesso aleatório de 3 dígitos
+function generateAccessCode() {
+  return Math.floor(100 + Math.random() * 900); // Números entre 100 e 999
+}
+
+// Função para verificar se o código de acesso é válido
+function verifyAccessCode(code) {
+  return accessCodes.includes(parseInt(code));
+}
+
+// Evento de envio do formulário
+document.getElementById("votingForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+  
+  const codeInput = document.getElementById("code").value;
+  const nameInput = document.getElementById("name").value;
+  const voteInput = document.getElementById("vote").value;
+  
+  if (verifyAccessCode(codeInput)) {
+    document.getElementById("message").innerText = "Voto registrado com sucesso!";
+    voteCount[voteInput].count++;
+    voteCount[voteInput].voters.push(nameInput);
+    document.getElementById("viewResultBtn").style.display = "block";
+    // Aqui você pode adicionar lógica para enviar os dados do voto para um servidor, banco de dados, etc.
+  } else {
+    document.getElementById("message").innerText = "Código de acesso inválido!";
+  }
+});
+
+// Evento para gerar códigos de acesso
+document.getElementById("generateCodesBtn").addEventListener("click", function() {
+  const quantity = parseInt(document.getElementById("quantity").value);
+  
+  // Limpar os arrays antes de gerar novos códigos
+  accessCodes = [];
+  names = [];
+  
+  // Gerar códigos de acesso aleatórios
+  for (let i = 0; i < quantity; i++) {
+    const code = generateAccessCode();
+    accessCodes.push(code);
+    const name = prompt("Digite o nome da pessoa vinculada a este código:");
+    names.push(name);
+  }
+  
+  // Exibir os códigos gerados na interface
+  const generatedCodesElement = document.getElementById("generatedCodes");
+  generatedCodesElement.innerHTML = "<strong>Códigos Gerados:</strong><br>" + accessCodes.join("<br>");
+  
+  // Exibir os nomes vinculados aos códigos
+  const namesElement = document.getElementById("names");
+  namesElement.innerHTML = "<strong>Nomes Vinculados:</strong><br>";
+  for (let i = 0; i < quantity; i++) {
+    namesElement.innerHTML += names[i] + "<br>";
+  }
+  
+  // Mudar para a aba de votação
+  document.getElementById("generateTab").style.display = "none";
+  document.getElementById("votingTab").style.display = "block";
+  
+  // Exportar códigos para um arquivo de texto
+  let textToSave = "";
+  for (let i = 0; i < quantity; i++) {
+    textToSave += accessCodes[i] + ": " + names[i] + "\n";
+  }
+  const blob = new Blob([textToSave], {type: "text/plain"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "access_codes.txt";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// Evento para exibir o resultado da votação
+document.getElementById("viewResultBtn").addEventListener("click", function() {
+  calculateVotingResults();
+  document.getElementById("votingResults").style.display = "block";
+});
+
+// Função para calcular o resultado da votação
+function calculateVotingResults() {
+  for (const key in voteCount) {
+    if (voteCount.hasOwnProperty(key)) {
+      const count = voteCount[key].count;
+      const voters = voteCount[key].voters.join(", ");
+      console.log(`Opção ${key}: ${count} voto(s) - Votantes: ${voters}`);
+    }
+  }
+}
+
+</script>
+
+</body>
+</html>
